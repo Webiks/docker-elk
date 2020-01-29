@@ -19,7 +19,7 @@ services:
       - "9200:9200"
       - "9300:9300"
     environment:
-      ES_JAVA_OPTS: "-Xmx16g -Xms16g"
+      ES_JAVA_OPTS: "-Xmx4g -Xmx4g"
       ELASTIC_PASSWORD: changeme
     networks:
       - elk
@@ -48,6 +48,7 @@ services:
       - elk
     depends_on:
       - elasticsearch
+      - kafka
 
   kibana:
     image: webiks/kibana
@@ -66,6 +67,28 @@ services:
       - elk
     depends_on:
       - elasticsearch
+      
+  zookeeper:
+    image: wurstmeister/zookeeper
+    ports:
+      - "2181:2181"
+    networks:
+      - elk
+  kafka:
+    image: wurstmeister/kafka
+    ports:
+      - "9092:9092"
+    networks:
+      - elk
+    environment:
+      KAFKA_ADVERTISED_HOST_NAME: kafka
+      KAFKA_ADVERTISED_PORT: "9092"
+      KAFKA_ZOOKEEPER_CONNECT: zookeeper:2181
+      KAFKA_MESSAGE_MAX_BYTES: 2000000
+      HOSTNAME_COMMAND: "route -n | awk '/UG[ \t]/{print $$2}'"
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+
 
 networks:
   elk:
